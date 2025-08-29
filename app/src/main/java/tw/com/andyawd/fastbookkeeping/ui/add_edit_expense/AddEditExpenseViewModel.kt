@@ -1,5 +1,7 @@
 package tw.com.andyawd.fastbookkeeping.ui.add_edit_expense
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -48,7 +50,7 @@ class AddEditExpenseViewModel @Inject constructor(
     }
 
     fun onLocalAmountChange(newAmount: String) {
-        if (newAmount.matches(Regex("^\\d*\\.?\\d*\"")))) {
+        if (newAmount.matches(Regex("^\\d*\\.?\\d*\""))) {
             _uiState.update { it.copy(localAmount = newAmount) }
         }
     }
@@ -58,7 +60,7 @@ class AddEditExpenseViewModel @Inject constructor(
     }
 
     fun onTwdAmountChange(newAmount: String) {
-        if (newAmount.matches(Regex("^\\d*\\.?\\d*\"")))) {
+        if (newAmount.matches(Regex("^\\d*\\.?\\d*\""))) {
             _uiState.update { it.copy(twdAmount = newAmount) }
         }
     }
@@ -75,6 +77,7 @@ class AddEditExpenseViewModel @Inject constructor(
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun saveExpense() {
         val currentState = _uiState.value
         if (currentState.description.isBlank() ||

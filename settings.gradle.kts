@@ -3,8 +3,8 @@ pluginManagement {
         google {
             content {
                 includeGroupByRegex("com\\.android.*")
-                // 將 Google 的過濾規則變得更具體
-                includeGroup("com.google.dagger") // 這是給 Hilt 外掛程式用的
+                // 這一行就涵蓋了 Hilt、KSP 以及那個找不到的 testing platform 依賴
+                includeGroupByRegex("com\\.google.*")
                 includeGroupByRegex("androidx.*")
             }
         }
