@@ -12,6 +12,9 @@ interface ExpenseDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(expense: Expense)
 
+    @Query("SELECT * FROM expenses ORDER BY transaction_date_time DESC LIMIT 1")
+    suspend fun getLatestExpense(): Expense?
+
     @Transaction
     @Query("SELECT * FROM expenses ORDER BY transaction_date_time DESC")
     fun getAllExpensesWithCategory(): Flow<List<ExpenseWithCategory>>

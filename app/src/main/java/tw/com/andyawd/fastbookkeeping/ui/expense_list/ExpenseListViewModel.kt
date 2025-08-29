@@ -16,7 +16,7 @@ class ExpenseListViewModel @Inject constructor(
 ) : ViewModel() {
 
     val expenses: StateFlow<List<ExpenseWithCategory>> =
-        expenseRepository.getAllExpenses()
+        expenseRepository.getAllExpensesWithCategory()
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),

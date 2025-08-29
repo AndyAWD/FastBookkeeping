@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -39,6 +40,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import tw.com.andyawd.fastbookkeeping.data.database.Category
+import tw.com.andyawd.fastbookkeeping.data.database.Currency
 
 @Composable
 fun AddEditExpenseScreen(
@@ -46,7 +48,9 @@ fun AddEditExpenseScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val categories by viewModel.categories.collectAsState()
+    val currencies by viewModel.currencies.collectAsState()
     var showCategoryDialog by remember { mutableStateOf(false) }
+    var showCurrencyDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(uiState.saveSuccess) {
@@ -77,12 +81,26 @@ fun AddEditExpenseScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                OutlinedTextField(
-                    value = uiState.localCurrency,
-                    onValueChange = viewModel::onLocalCurrencyChange,
-                    label = { Text("幣別") },
-                    modifier = Modifier.weight(0.5f)
-                )
+                Box(modifier = Modifier.weight(1f)) {
+                    OutlinedTextField(
+                        value = uiState.localCurrency,
+                        onValueChange = { },
+                        readOnly = true,
+                        label = { Text("幣別") },
+                        modifier = Modifier.fillMaxWidth(),
+                        trailingIcon = {
+                            Icon(
+                                Icons.Default.ArrowDropDown,
+                                contentDescription = null
+                            )
+                        }
+                    )
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clickable { showCurrencyDialog = true }
+                    )
+                }
             }
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedTextField(
@@ -95,16 +113,19 @@ fun AddEditExpenseScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             // Category Selector
-            Box(modifier = Modifier.clickable { showCategoryDialog = true }) {
+            Box {
                 OutlinedTextField(
                     value = uiState.selectedCategory?.name ?: "選擇分類",
                     onValueChange = { },
                     readOnly = true,
                     label = { Text("分類") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .pointerInput(Unit) {},
+                    modifier = Modifier.fillMaxWidth(),
                     trailingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null) }
+                )
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clickable { showCategoryDialog = true }
                 )
             }
 
@@ -136,6 +157,81 @@ fun AddEditExpenseScreen(
             onAddNewCategory = viewModel::onAddNewCategory
         )
     }
+
+    if (showCurrencyDialog) {
+        CurrencySelectionDialog(
+            currencies = currencies,
+            onDismissRequest = { showCurrencyDialog = false },
+            onCurrencySelected = {
+                viewModel.onCurrencySelected(it)
+                showCurrencyDialog = false
+            },
+            onAddNewCurrency = viewModel::onAddNewCurrency
+        )
+    }
+}
+
+@Composable
+private fun CurrencySelectionDialog(
+    currencies: List<Currency>,
+    onDismissRequest: () -> Unit,
+    onCurrencySelected: (Currency) -> Unit,
+    onAddNewCurrency: (String) -> Unit
+) {
+    var showAddCurrencyField by remember { mutableStateOf(false) }
+    var newCurrencyName by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = { Text("選擇幣別") },
+        text = {
+            Column {
+                LazyColumn {
+                    items(currencies) { currency ->
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = currency.name,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onCurrencySelected(currency) }
+                                    .padding(vertical = 12.dp)
+                            )
+                            Divider()
+                        }
+                    }
+                }
+                if (showAddCurrencyField) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        OutlinedTextField(
+                            value = newCurrencyName,
+                            onValueChange = { newCurrencyName = it },
+                            label = { Text("新幣別名稱") },
+                            modifier = Modifier.weight(1f)
+                        )
+                        IconButton(onClick = {
+                            if (newCurrencyName.isNotBlank()) {
+                                onAddNewCurrency(newCurrencyName)
+                                newCurrencyName = ""
+                                showAddCurrencyField = false
+                            }
+                        }) {
+                            Icon(Icons.Default.Add, contentDescription = "新增")
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { showAddCurrencyField = true }) {
+                Text("新增幣別")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismissRequest) {
+                Text("取消")
+            }
+        }
+    )
 }
 
 @Composable
@@ -155,13 +251,16 @@ private fun CategorySelectionDialog(
             Column {
                 LazyColumn {
                     items(categories) { category ->
-                        Text(
-                            text = category.name,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onCategorySelected(category) }
-                                .padding(vertical = 12.dp)
-                        )
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = category.name,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onCategorySelected(category) }
+                                    .padding(vertical = 12.dp)
+                            )
+                            Divider()
+                        }
                     }
                 }
                 if (showAddCategoryField) {

@@ -1,5 +1,6 @@
 package tw.com.andyawd.fastbookkeeping.ui.add_edit_expense
 
+import tw.com.andyawd.fastbookkeeping.data.repository.ExpenseRepository
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
@@ -13,8 +14,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import tw.com.andyawd.fastbookkeeping.data.database.Category
+import tw.com.andyawd.fastbookkeeping.data.database.Currency
 import tw.com.andyawd.fastbookkeeping.data.database.Expense
-import tw.com.andyawd.fastbookkeeping.data.repository.ExpenseRepository
 import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
@@ -45,6 +46,26 @@ class AddEditExpenseViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
+    val currencies: StateFlow<List<Currency>> = expenseRepository.getAllCurrencies()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    init {
+        viewModelScope.launch {
+            expenseRepository.getLatestExpenseCurrency()?.let { lastCurrency ->
+                _uiState.update { it.copy(localCurrency = lastCurrency) }
+            }
+            expenseRepository.getLatestExpenseCategoryId()?.let { lastCategoryId ->
+                expenseRepository.getCategoryById(lastCategoryId)?.let { lastCategory ->
+                    _uiState.update { it.copy(selectedCategory = lastCategory) }
+                }
+            }
+        }
+    }
+
     fun onDescriptionChange(newDescription: String) {
         _uiState.update { it.copy(description = newDescription) }
     }
@@ -55,8 +76,16 @@ class AddEditExpenseViewModel @Inject constructor(
         }
     }
 
-    fun onLocalCurrencyChange(newCurrency: String) {
-        _uiState.update { it.copy(localCurrency = newCurrency.uppercase()) }
+    fun onCurrencySelected(currency: Currency) {
+        _uiState.update { it.copy(localCurrency = currency.name) }
+    }
+
+    fun onAddNewCurrency(currencyName: String) {
+        viewModelScope.launch {
+            val newCurrency = Currency(name = currencyName.uppercase())
+            expenseRepository.insertCurrency(newCurrency)
+            onCurrencySelected(newCurrency)
+        }
     }
 
     fun onTwdAmountChange(newAmount: String) {
@@ -111,7 +140,8 @@ class AddEditExpenseViewModel @Inject constructor(
                         // Reset fields
                         description = "",
                         localAmount = "",
-                        localCurrency = "",
+                        // Keep last used currency
+                        // localCurrency = "",
                         twdAmount = "",
                         selectedCategory = null
                     )
