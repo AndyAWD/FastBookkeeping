@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import tw.com.andyawd.fastbookkeeping.data.database.ExpenseWithCategory
 import tw.com.andyawd.fastbookkeeping.data.repository.ExpenseRepository
 import javax.inject.Inject
@@ -22,4 +23,10 @@ class ExpenseListViewModel @Inject constructor(
                 started = SharingStarted.WhileSubscribed(5000),
                 initialValue = emptyList()
             )
+
+    fun deleteExpense(expenseWithCategory: ExpenseWithCategory) {
+        viewModelScope.launch {
+            expenseRepository.deleteExpense(expenseWithCategory.expense)
+        }
+    }
 }

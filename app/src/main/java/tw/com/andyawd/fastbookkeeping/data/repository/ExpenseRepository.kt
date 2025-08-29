@@ -19,6 +19,10 @@ class ExpenseRepository @Inject constructor(
         expenseDao.insert(expense)
     }
 
+    suspend fun deleteExpense(expense: Expense) {
+        expenseDao.delete(expense)
+    }
+
     fun getAllCategories() = categoryDao.getAllCategories()
 
     suspend fun insertCategory(category: Category): Long {
