@@ -53,7 +53,10 @@ fun ExpenseListScreen(
                 stickyHeader {
                     DateHeader(date = date)
                 }
-                items(expensesOnDate) { expenseItem ->
+                items(
+                    items = expensesOnDate,
+                    key = { it.expense.id }
+                ) { expenseItem ->
                     ExpenseListItem(item = expenseItem)
                 }
             }

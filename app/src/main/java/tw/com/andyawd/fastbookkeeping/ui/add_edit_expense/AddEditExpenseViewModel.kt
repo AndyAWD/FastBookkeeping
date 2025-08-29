@@ -50,7 +50,7 @@ class AddEditExpenseViewModel @Inject constructor(
     }
 
     fun onLocalAmountChange(newAmount: String) {
-        if (newAmount.matches(Regex("^\\d*\\.?\\d*\""))) {
+        if (newAmount.matches(Regex("^\\d*\\.?\\d*$"))) {
             _uiState.update { it.copy(localAmount = newAmount) }
         }
     }
@@ -60,7 +60,7 @@ class AddEditExpenseViewModel @Inject constructor(
     }
 
     fun onTwdAmountChange(newAmount: String) {
-        if (newAmount.matches(Regex("^\\d*\\.?\\d*\""))) {
+        if (newAmount.matches(Regex("^\\d*\\.?\\d*$"))) {
             _uiState.update { it.copy(twdAmount = newAmount) }
         }
     }
@@ -93,26 +93,39 @@ class AddEditExpenseViewModel @Inject constructor(
         _uiState.update { it.copy(isSaving = true) }
 
         viewModelScope.launch {
-            val expense = Expense(
-                description = currentState.description,
-                localAmount = BigDecimal(currentState.localAmount),
-                localCurrency = currentState.localCurrency,
-                twdAmount = BigDecimal(currentState.twdAmount),
-                transactionDateTime = OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-                categoryId = currentState.selectedCategory.id
-            )
-            expenseRepository.insertExpense(expense)
-            _uiState.update {
-                it.copy(
-                    isSaving = false,
-                    saveSuccess = true,
-                    // Reset fields
-                    description = "",
-                    localAmount = "",
-                    localCurrency = "",
-                    twdAmount = "",
-                    selectedCategory = null
+            try {
+                val expense = Expense(
+                    description = currentState.description,
+                    localAmount = BigDecimal(currentState.localAmount),
+                    localCurrency = currentState.localCurrency,
+                    twdAmount = BigDecimal(currentState.twdAmount),
+                    transactionDateTime = OffsetDateTime.now()
+                        .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                    categoryId = currentState.selectedCategory.id
                 )
+                expenseRepository.insertExpense(expense)
+                _uiState.update {
+                    it.copy(
+                        isSaving = false,
+                        saveSuccess = true,
+                        // Reset fields
+                        description = "",
+                        localAmount = "",
+                        localCurrency = "",
+                        twdAmount = "",
+                        selectedCategory = null
+                    )
+                }
+            } catch (e: Exception) {
+                // Handle the error, e.g., show a snackbar
+                _uiState.update {
+                    it.copy(
+                        isSaving = false,
+                        saveSuccess = false
+                        // Optionally, you can add an error message to the state
+                        // errorMessage = "儲存失敗: ${e.message}"
+                    )
+                }
             }
         }
     }
